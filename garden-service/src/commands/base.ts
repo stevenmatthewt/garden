@@ -14,7 +14,7 @@ import stripAnsi from "strip-ansi"
 
 import { GlobalOptions } from "../cli/cli"
 import { joi } from "../config/common"
-import { GardenError, InternalError, ParameterError, RuntimeError } from "../exceptions"
+import { GardenError, InternalError, RuntimeError } from "../exceptions"
 import { Garden } from "../garden"
 import { LogEntry } from "../logger/log-entry"
 import { LoggerType } from "../logger/logger"
@@ -23,6 +23,7 @@ import { ProcessResults } from "../process"
 import { TaskResults, TaskResult } from "../task-graph"
 import { RunResult } from "../types/plugin/base"
 import { capitalize } from "lodash"
+import { parseEnvironment } from "../config/project"
 
 export interface ParameterConstructor<T> {
   help: string
@@ -81,8 +82,6 @@ export abstract class Parameter<T> {
     return input
   }
 
-  abstract parseString(input: string): T
-
   async autoComplete(): Promise<string[]> {
     return []
   }
@@ -91,10 +90,6 @@ export abstract class Parameter<T> {
 export class StringParameter extends Parameter<string> {
   type = "string"
   schema = joi.string()
-
-  parseString(input: string) {
-    return input
-  }
 }
 
 // Separating this from StringParameter for now because we can't set the output type based on the required flag
@@ -102,10 +97,6 @@ export class StringParameter extends Parameter<string> {
 export class StringOption extends Parameter<string | undefined> {
   type = "string"
   schema = joi.string()
-
-  parseString(input?: string) {
-    return input
-  }
 }
 
 export interface StringsConstructor extends ParameterConstructor<string[]> {
@@ -132,44 +123,21 @@ export class StringsParameter extends Parameter<string[] | undefined> {
     }
     return filtered
   }
-
-  parseString(input: string) {
-    return input.split(this.delimiter)
-  }
 }
 
 export class PathParameter extends Parameter<string> {
   type = "path"
   schema = joi.posixPath()
-
-  parseString(input: string) {
-    return input
-  }
 }
 
 export class PathsParameter extends Parameter<string[]> {
   type = "array:path"
   schema = joi.array().items(joi.posixPath())
-
-  parseString(input: string) {
-    return input.split(",")
-  }
 }
 
 export class IntegerParameter extends Parameter<number> {
   type = "number"
   schema = joi.number().integer()
-
-  parseString(input: string) {
-    try {
-      return parseInt(input, 10)
-    } catch {
-      throw new ParameterError(`Could not parse "${input}" as integer`, {
-        expectedType: "integer",
-        input,
-      })
-    }
-  }
 }
 
 export interface ChoicesConstructor extends ParameterConstructor<string> {
@@ -188,17 +156,6 @@ export class ChoicesParameter extends Parameter<string> {
     this.schema = joi.string().valid(...args.choices)
   }
 
-  parseString(input: string) {
-    if (this.choices.includes(input)) {
-      return input
-    } else {
-      throw new ParameterError(`"${input}" is not a valid argument`, {
-        expectedType: `One of: ${this.choices.join(", ")}`,
-        input,
-      })
-    }
-  }
-
   async autoComplete() {
     return this.choices
   }
@@ -207,20 +164,27 @@ export class ChoicesParameter extends Parameter<string> {
 export class BooleanParameter extends Parameter<boolean> {
   type = "boolean"
   schema = joi.boolean()
-
-  parseString(input: any) {
-    return !!input
-  }
 }
 
-// TODO: maybe this should be a global option?
 export class EnvironmentOption extends StringParameter {
+  type = "string"
+  schema = joi.environment()
+
   constructor({ help = "The environment (and optionally namespace) to work against." } = {}) {
     super({
       help,
       required: false,
       alias: "e",
     })
+  }
+
+  coerce(input: string | undefined) {
+    if (!input) {
+      return
+    }
+    // Validate the environment
+    parseEnvironment(input)
+    return input
   }
 }
 

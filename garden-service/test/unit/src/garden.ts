@@ -271,6 +271,54 @@ describe("Garden", () => {
         await dir.cleanup()
       }
     })
+
+    it("should set the namespace attribute, if specified", async () => {
+      const projectRoot = join(dataDir, "test-project-empty")
+      const garden = await TestGarden.factory(projectRoot, { plugins: [testPlugin], environmentName: "foo.local" })
+      expect(garden.environmentName).to.equal("local")
+      expect(garden.namespace).to.equal("foo")
+    })
+
+    it("should throw if a namespace is specified and the specified environment disables namespacing", async () => {
+      const config: ProjectConfig = {
+        apiVersion: DEFAULT_API_VERSION,
+        kind: "Project",
+        name: "test",
+        path: pathFoo,
+        defaultEnvironment: "default",
+        dotIgnoreFiles: [],
+        environments: [{ name: "default", namespacing: "disabled", variables: {} }],
+        providers: [{ name: "foo" }],
+        variables: {},
+      }
+
+      await expectError(
+        () => TestGarden.factory(pathFoo, { config, environmentName: "foo.default" }),
+        (err) =>
+          expect(err.message).to.equal(
+            "Environment default does not allow namespacing, but namespace 'foo' was specified."
+          )
+      )
+    })
+
+    it("should throw if a namespace is not specified and the specified environment requires namespacing", async () => {
+      const config: ProjectConfig = {
+        apiVersion: DEFAULT_API_VERSION,
+        kind: "Project",
+        name: "test",
+        path: pathFoo,
+        defaultEnvironment: "default",
+        dotIgnoreFiles: [],
+        environments: [{ name: "default", namespacing: "required", variables: {} }],
+        providers: [{ name: "foo" }],
+        variables: {},
+      }
+
+      await expectError(
+        () => TestGarden.factory(pathFoo, { config, environmentName: "default" }),
+        (err) => expect(err.message).to.equal("Environment default requires a namespace, but none was specified.")
+      )
+    })
   })
 
   describe("getPlugins", () => {

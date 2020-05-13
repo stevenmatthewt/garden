@@ -148,7 +148,7 @@ Information about the environment that Garden is running against.
 
 ### `${environment.name}`
 
-The name of the environment Garden is running against.
+The name of the environment Garden is running against, excluding the namespace.
 
 | Type     |
 | -------- |
@@ -158,6 +158,34 @@ Example:
 
 ```yaml
 my-variable: ${environment.name}
+```
+
+### `${environment.fullName}`
+
+The full name of the environment Garden is running against, including the namespace.
+
+| Type     |
+| -------- |
+| `string` |
+
+Example:
+
+```yaml
+my-variable: ${environment.fullName}
+```
+
+### `${environment.namespace}`
+
+The currently active namespace (if any).
+
+| Type     |
+| -------- |
+| `string` |
+
+Example:
+
+```yaml
+my-variable: ${environment.namespace}
 ```
 
 ### `${project.*}`
@@ -285,7 +313,7 @@ Information about the environment that Garden is running against.
 
 ### `${environment.name}`
 
-The name of the environment Garden is running against.
+The name of the environment Garden is running against, excluding the namespace.
 
 | Type     |
 | -------- |
@@ -295,6 +323,34 @@ Example:
 
 ```yaml
 my-variable: ${environment.name}
+```
+
+### `${environment.fullName}`
+
+The full name of the environment Garden is running against, including the namespace.
+
+| Type     |
+| -------- |
+| `string` |
+
+Example:
+
+```yaml
+my-variable: ${environment.fullName}
+```
+
+### `${environment.namespace}`
+
+The currently active namespace (if any).
+
+| Type     |
+| -------- |
+| `string` |
+
+Example:
+
+```yaml
+my-variable: ${environment.namespace}
 ```
 
 ### `${project.*}`
@@ -454,7 +510,7 @@ Information about the environment that Garden is running against.
 
 ### `${environment.name}`
 
-The name of the environment Garden is running against.
+The name of the environment Garden is running against, excluding the namespace.
 
 | Type     |
 | -------- |
@@ -464,6 +520,34 @@ Example:
 
 ```yaml
 my-variable: ${environment.name}
+```
+
+### `${environment.fullName}`
+
+The full name of the environment Garden is running against, including the namespace.
+
+| Type     |
+| -------- |
+| `string` |
+
+Example:
+
+```yaml
+my-variable: ${environment.fullName}
+```
+
+### `${environment.namespace}`
+
+The currently active namespace (if any).
+
+| Type     |
+| -------- |
+| `string` |
+
+Example:
+
+```yaml
+my-variable: ${environment.namespace}
 ```
 
 ### `${project.*}`

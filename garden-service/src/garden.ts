@@ -107,6 +107,7 @@ export interface GardenParams {
   clientAuthToken: string | null
   dotIgnoreFiles: string[]
   environmentName: string
+  namespace?: string
   gardenDirPath: string
   log: LogEntry
   moduleIncludePatterns?: string[]
@@ -159,6 +160,7 @@ export class Garden {
   public readonly projectRoot: string
   public readonly projectName: string
   public readonly environmentName: string
+  public readonly namespace?: string
   public readonly variables: DeepPrimitiveMap
   public readonly secrets: StringMap
   public readonly projectSources: SourceConfig[]
@@ -183,6 +185,7 @@ export class Garden {
     this.cloudDomain = params.cloudDomain
     this.sessionId = params.sessionId
     this.environmentName = params.environmentName
+    this.namespace = params.namespace
     this.gardenDirPath = params.gardenDirPath
     this.log = params.log
     this.artifactsPath = params.artifactsPath
@@ -249,7 +252,7 @@ export class Garden {
     currentDirectory: string,
     opts: GardenOpts = {}
   ): Promise<InstanceType<T>> {
-    let { environmentName, config, gardenDirPath, plugins = [] } = opts
+    let { environmentName: environmentStr, config, gardenDirPath, plugins = [] } = opts
     if (!config) {
       config = await findProjectConfig(currentDirectory)
 
@@ -272,11 +275,14 @@ export class Garden {
 
     const { defaultEnvironment, name: projectName, sources: projectSources, path: projectRoot } = config
 
-    if (!environmentName) {
-      environmentName = defaultEnvironment
+    if (!environmentStr) {
+      environmentStr = defaultEnvironment
     }
 
-    const { providers, variables, production } = await pickEnvironment(config, environmentName)
+    const { environmentName, namespace, providers, variables, production } = await pickEnvironment(
+      config,
+      environmentStr
+    )
 
     const buildDir = await BuildDir.factory(projectRoot, gardenDirPath)
     const workingCopyId = await getWorkingCopyId(gardenDirPath)
@@ -354,6 +360,7 @@ export class Garden {
       projectRoot,
       projectName,
       environmentName,
+      namespace,
       variables,
       secrets,
       projectSources,
@@ -1086,6 +1093,7 @@ export class Garden {
 
     return {
       environmentName: this.environmentName,
+      namespace: this.namespace,
       providers: await this.resolveProviders(),
       variables: this.variables,
       moduleConfigs: sortBy(
@@ -1102,6 +1110,7 @@ export class Garden {
 
 export interface ConfigDump {
   environmentName: string
+  namespace?: string
   providers: Provider[]
   variables: DeepPrimitiveMap
   moduleConfigs: ModuleConfig[]

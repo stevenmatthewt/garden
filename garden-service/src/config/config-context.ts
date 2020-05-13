@@ -282,14 +282,34 @@ class EnvironmentContext extends ConfigContext {
   @schema(
     joi
       .string()
-      .description("The name of the environment Garden is running against.")
+      .required()
+      .description("The name of the environment Garden is running against, excluding the namespace.")
       .example("local")
   )
   public name: string
 
-  constructor(root: ConfigContext, name: string) {
+  @schema(
+    joi
+      .string()
+      .required()
+      .description("The full name of the environment Garden is running against, including the namespace.")
+      .example("my-namespace.local")
+  )
+  public fullName: string
+
+  @schema(
+    joi
+      .string()
+      .description("The currently active namespace (if any).")
+      .example("my-namespace")
+  )
+  public namespace?: string
+
+  constructor(root: ConfigContext, name: string, fullName: string, namespace?: string) {
     super(root)
     this.name = name
+    this.fullName = fullName
+    this.namespace = namespace
   }
 }
 
@@ -372,7 +392,9 @@ export class ProviderConfigContext extends ProjectConfigContext {
     super(garden.artifactsPath, garden.username)
     const _this = this
 
-    this.environment = new EnvironmentContext(this, garden.environmentName)
+    const fullEnvName = garden.namespace ? `${garden.namespace}.${garden.environmentName}` : garden.environmentName
+    this.environment = new EnvironmentContext(this, garden.environmentName, fullEnvName, garden.namespace)
+
     this.project = new ProjectContext(this, garden.projectName)
 
     this.providers = new Map(
